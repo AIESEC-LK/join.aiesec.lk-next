@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, FormEvent, useEffect } from "react";
+import InputField from "./InputField";
+import { FormData } from "../types/types";
 
 // Declare jQuery type for TypeScript
 declare global {
@@ -20,23 +22,6 @@ declare global {
       };
     };
   }
-}
-
-interface FormData {
-  first_name: string;
-  last_name: string;
-  dob: string;
-  email: string;
-  phone: string;
-  university: string;
-  faculty: string;
-  batch: string;
-  why: string;
-  preferred_contact: string;
-  employment_status: string;
-  motivation: string;
-  referral: string;
-  privacy_agreed: boolean;
 }
 
 export default function JoinAiesecForm() {
@@ -159,47 +144,21 @@ export default function JoinAiesecForm() {
       >
         <div className="row row-space">
           <div className="col-2">
-            <div className="input-group">
-              <label className="label">
-                First Name<span className="required_field"> *</span>
-              </label>
-              <input
-                className="input--style-4"
-                type="text"
-                name="first_name"
-                value={formData.first_name}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
+            <InputField
+              label="First Name"
+              name="first_name"
+              type="text"
+              value={formData.first_name}
+              onChange={handleInputChange}
+              required
+            />
           </div>
           <div className="col-2">
-            <div className="input-group">
-              <label className="label">
-                Last Name<span className="required_field"> *</span>
-              </label>
-              <input
-                className="input--style-4"
-                type="text"
-                name="last_name"
-                value={formData.last_name}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <div className="input-group">
-            <label className="label">
-              Date of Birth<span className="required_field"> *</span>
-            </label>
-            <input
-              className="input--style-4 datepicker"
-              type="date"
-              name="dob"
-              value={formData.dob}
+            <InputField
+              label="Last Name"
+              name="last_name"
+              type="text"
+              value={formData.last_name}
               onChange={handleInputChange}
               required
             />
@@ -207,37 +166,39 @@ export default function JoinAiesecForm() {
         </div>
 
         <div>
-          <div className="input-group">
-            <label className="label">
-              Email Address<span className="required_field"> *</span>
-            </label>
-            <input
-              className="input--style-4"
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
+          <InputField
+            label="Date of Birth"
+            name="dob"
+            type="date"
+            value={formData.dob}
+            onChange={handleInputChange}
+            required
+            className="datepicker"
+          />
         </div>
 
         <div>
-          <div className="input-group">
-            <label className="label">
-              Phone Number<span className="required_field"> *</span>
-            </label>
-            <input
-              className="input--style-4"
-              type="tel"
-              placeholder="07xxxxxxxx"
-              name="phone"
-              value={formData.phone}
-              onChange={handleInputChange}
-              pattern="[0-9]{10}"
-              required
-            />
-          </div>
+          <InputField
+            label="Email Address"
+            name="email"
+            type="email"
+            value={formData.email}
+            onChange={handleInputChange}
+            required
+          />
+        </div>
+
+        <div>
+          <InputField
+            label="Phone Number"
+            name="phone"
+            type="tel"
+            value={formData.phone}
+            onChange={handleInputChange}
+            required
+            placeholder="07xxxxxxxx"
+            pattern="[0-9]{10}"
+          />
         </div>
 
         <div className="input-group">
@@ -260,8 +221,12 @@ export default function JoinAiesecForm() {
               <option value="7671">University of Peradeniya</option>
               <option value="7670">University of Sri Jayewardenepura</option>
               <option value="7672">University of Ruhuna</option>
-              <option value="7673">Sri Lanka Institute of Information Technology</option>
-              <option value="29287">National School of Business Management</option>
+              <option value="7673">
+                Sri Lanka Institute of Information Technology
+              </option>
+              <option value="29287">
+                National School of Business Management
+              </option>
             </select>
             <div className="select-dropdown"></div>
           </div>
@@ -269,51 +234,36 @@ export default function JoinAiesecForm() {
 
         <div className="row row-space">
           <div className="col-2">
-            <div className="input-group">
-              <label className="label">
-                Faculty<span className="required_field"> *</span>
-              </label>
-              <input
-                className="input--style-4"
-                type="text"
-                name="faculty"
-                value={formData.faculty}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-          </div>
-          <div className="col-2">
-            <div className="input-group">
-              <label className="label">
-                Batch<span className="required_field"> *</span>
-              </label>
-              <input
-                className="input--style-4"
-                type="text"
-                name="batch"
-                value={formData.batch}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <div className="input-group">
-            <label className="label">
-              Why do you want to join AIESEC?
-              <span className="required_field"> *</span>
-            </label>
-            <input
-              className="input--style-4"
-              name="why"
-              value={formData.why}
+            <InputField
+              label="Faculty"
+              name="faculty"
+              type="text"
+              value={formData.faculty}
               onChange={handleInputChange}
               required
             />
           </div>
+          <div className="col-2">
+            <InputField
+              label="Batch"
+              name="batch"
+              type="text"
+              value={formData.batch}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+        </div>
+
+        <div>
+          <InputField
+            label="Why do you want to join AIESEC?"
+            name="why"
+            type="text"
+            value={formData.why}
+            onChange={handleInputChange}
+            required
+          />
         </div>
 
         <div className="input-group">
