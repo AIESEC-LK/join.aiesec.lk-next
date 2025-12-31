@@ -1,7 +1,9 @@
 import { homeLcIds, remap } from "@/app/constants/mappings";
-import { AiesecApiResponse, ApiFormData, MemberLead } from "@/app/types/types";
+import { AiesecApiResponse, MemberLead } from "@/app/types/types";
 import { appendToSheets } from "@/app/utils/sheet";
+import { signupSchema, ValidatedFormData } from "@/app/api/utils/validation";
 import { NextRequest, NextResponse } from "next/server";
+import { ZodError } from "zod";
 
 async function verifyRecaptcha(
   token: string,
@@ -72,7 +74,26 @@ async function createMemberLead(
 
 export async function POST(req: NextRequest) {
   try {
-    const formData: ApiFormData = await req.json();
+    const rawFormData = await req.json();
+
+    // Validate the form data using Zod schema
+    let formData: ValidatedFormData;
+    try {
+      formData = signupSchema.parse(rawFormData);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return NextResponse.json(
+          {
+            errors: error.issues.map((issue) => ({
+              field: issue.path.join("."),
+              message: issue.message,
+            })),
+          },
+          { status: 400 }
+        );
+      }
+      throw error;
+    }
 
     // Extract form fields
     const {

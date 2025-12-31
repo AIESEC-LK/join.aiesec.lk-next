@@ -143,7 +143,7 @@ export default function JoinAiesecForm({
 
       const result = await response.json();
 
-      if (response.ok && result.success) {
+      if (response.ok && result.data?.success) {
         alert("Form submitted successfully! Welcome to AIESEC!");
 
         // Reset form
@@ -170,11 +170,25 @@ export default function JoinAiesecForm({
         }
       } else {
         console.error("Submission error:", result);
-        alert(
-          `Error: ${
-            result.message || "Failed to submit form. Please try again."
-          }`
-        );
+
+        // Handle validation errors
+        if (result.errors && Array.isArray(result.errors)) {
+          const errorMessages = result.errors.map(
+            (error: { field?: string; message?: string }) => {
+              if (error.field && error.message) {
+                return `${error.field}: ${error.message}`;
+              }
+              return error.message || "Unknown error";
+            }
+          );
+          alert(`Validation Error(s):\n${errorMessages.join("\n")}`);
+        } else {
+          alert(
+            `Error: ${
+              result.message || "Failed to submit form. Please try again."
+            }`
+          );
+        }
       }
     } catch (error) {
       console.error("Form submission error:", error);

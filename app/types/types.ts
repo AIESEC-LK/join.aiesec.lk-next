@@ -15,11 +15,16 @@ export interface FormData {
   privacy_agreed: boolean;
 }
 
-export interface ApiFormData extends FormData {
-  "g-recaptcha-response": string;
+export type FacultyOption = { value: string; label: string };
+
+export interface ValidationError {
+  field: string;
+  message: string;
 }
 
-export type FacultyOption = { value: string; label: string };
+export interface ApiErrorResponse {
+  errors: ValidationError[] | Array<{ message: string; actual?: string }>;
+}
 
 export interface AiesecApiResponse {
   data?: {
