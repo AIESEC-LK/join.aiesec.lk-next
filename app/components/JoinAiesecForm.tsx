@@ -39,6 +39,10 @@ declare global {
         }) => void;
       };
     };
+    grecaptcha?: {
+      getResponse: () => string;
+      reset: () => void;
+    };
   }
 }
 
@@ -93,14 +97,6 @@ export default function JoinAiesecForm({
     return () => clearInterval(checkLibraries);
   }, []);
 
-  if (!validate_uni_key(uni_key)) {
-    if (typeof window !== "undefined" && "next" in window) {
-      // For Next.js 13+ App Router, use the notFound function
-      import("next/navigation").then(({ notFound }) => notFound());
-    }
-    return "Page Not found (404): Invalid URL";
-  }
-
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -118,15 +114,83 @@ export default function JoinAiesecForm({
     e.preventDefault();
     setIsLoading(true);
 
-    // TODO: Implement form submission logic
-    console.log("Form submitted:", formData);
+    try {
+      // Get reCAPTCHA token
+      const recaptchaResponse = window.grecaptcha?.getResponse();
+      if (!recaptchaResponse) {
+        alert("Please complete the reCAPTCHA verification.");
+        setIsLoading(false);
+        return;
+      }
 
-    // Simulate API call
-    setTimeout(() => {
+      // Prepare form data for submission
+      const submissionData = {
+        ...formData,
+        university: formData.university,
+        "g-recaptcha-response": recaptchaResponse,
+      };
+
+      console.log("Submitting form data:", submissionData);
+
+      // Submit to API route
+      const response = await fetch("/api/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(submissionData),
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        alert("Form submitted successfully! Welcome to AIESEC!");
+
+        // Reset form
+        setFormData({
+          first_name: "",
+          last_name: "",
+          dob: "",
+          email: "",
+          phone: "",
+          university: get_id_from_uni_key(uni_key),
+          faculty: "",
+          batch: "",
+          why: "",
+          preferred_contact: "",
+          employment_status: "",
+          motivation: "",
+          referral: "",
+          privacy_agreed: false,
+        });
+
+        // Reset reCAPTCHA
+        if (window.grecaptcha) {
+          window.grecaptcha.reset();
+        }
+      } else {
+        console.error("Submission error:", result);
+        alert(
+          `Error: ${
+            result.message || "Failed to submit form. Please try again."
+          }`
+        );
+      }
+    } catch (error) {
+      console.error("Form submission error:", error);
+      alert("An error occurred while submitting the form. Please try again.");
+    } finally {
       setIsLoading(false);
-      alert("Form submitted successfully!");
-    }, 2000);
+    }
   };
+
+  if (!validate_uni_key(uni_key)) {
+    if (typeof window !== "undefined" && "next" in window) {
+      // For Next.js 13+ App Router, use the notFound function
+      import("next/navigation").then(({ notFound }) => notFound());
+    }
+    return "Page Not found (404): Invalid URL";
+  }
 
   if (uni_key == undefined && formData.university != "") {
     uni_key = get_uni_key_from_id(formData.university);
