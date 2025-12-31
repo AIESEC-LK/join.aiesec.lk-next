@@ -3,6 +3,22 @@
 import { useState, FormEvent, useEffect } from "react";
 import InputField from "./InputField";
 import { FormData } from "../types/types";
+import {
+  FORM_LABELS,
+  FORM_PLACEHOLDERS,
+  PRIVACY_POLICY_TEXT,
+  SUBMIT_TEXT,
+} from "../constants/form_fields";
+import { validate_uni_key } from "../utils/validations";
+import { get_id_from_uni_key, get_uni_key_from_id } from "../utils/mappings";
+import {
+  CONTACT_METHOD_OPTIONS,
+  EMPLOYMENT_STATUS_OPTIONS,
+  MOTIVATION_OPTIONS,
+  REFERRAL_SOURCE_OPTIONS,
+  UNIVERSITY_OPTIONS,
+} from "../constants/select_values";
+import { get_batches, get_faculties } from "../utils/select_value_getters";
 
 // Declare jQuery type for TypeScript
 declare global {
@@ -24,14 +40,18 @@ declare global {
   }
 }
 
-export default function JoinAiesecForm() {
+export default function JoinAiesecForm({
+  uni_key,
+}: {
+  uni_key: string | undefined;
+}) {
   const [formData, setFormData] = useState<FormData>({
     first_name: "",
     last_name: "",
     dob: "",
     email: "",
     phone: "",
-    university: "",
+    university: get_id_from_uni_key(uni_key),
     faculty: "",
     batch: "",
     why: "",
@@ -71,6 +91,14 @@ export default function JoinAiesecForm() {
     return () => clearInterval(checkLibraries);
   }, []);
 
+  if (!validate_uni_key(uni_key)) {
+    if (typeof window !== "undefined" && "next" in window) {
+      // For Next.js 13+ App Router, use the notFound function
+      import("next/navigation").then(({ notFound }) => notFound());
+    }
+    return "Page Not found (404): Invalid URL";
+  }
+
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -97,6 +125,10 @@ export default function JoinAiesecForm() {
       alert("Form submitted successfully!");
     }, 2000);
   };
+
+  if (uni_key == undefined && formData.university != "") {
+    uni_key = get_uni_key_from_id(formData.university);
+  }
 
   return (
     <>
@@ -145,7 +177,7 @@ export default function JoinAiesecForm() {
         <div className="row row-space">
           <div className="col-2">
             <InputField
-              label="First Name"
+              label={FORM_LABELS.FIRST_NAME}
               name="first_name"
               type="text"
               value={formData.first_name}
@@ -155,7 +187,7 @@ export default function JoinAiesecForm() {
           </div>
           <div className="col-2">
             <InputField
-              label="Last Name"
+              label={FORM_LABELS.LAST_NAME}
               name="last_name"
               type="text"
               value={formData.last_name}
@@ -167,7 +199,7 @@ export default function JoinAiesecForm() {
 
         <div>
           <InputField
-            label="Date of Birth"
+            label={FORM_LABELS.DATE_OF_BIRTH}
             name="dob"
             type="date"
             value={formData.dob}
@@ -179,7 +211,7 @@ export default function JoinAiesecForm() {
 
         <div>
           <InputField
-            label="Email Address"
+            label={FORM_LABELS.EMAIL_ADDRESS}
             name="email"
             type="email"
             value={formData.email}
@@ -190,74 +222,66 @@ export default function JoinAiesecForm() {
 
         <div>
           <InputField
-            label="Phone Number"
+            label={FORM_LABELS.PHONE_NUMBER}
             name="phone"
             type="tel"
             value={formData.phone}
             onChange={handleInputChange}
             required
-            placeholder="07xxxxxxxx"
+            placeholder={FORM_PLACEHOLDERS.PHONE_NUMBER}
             pattern="[0-9]{10}"
           />
         </div>
 
-        <div className="input-group">
-          <label className="label">
-            University or Institute<span className="required_field"> *</span>
-          </label>
-          <div className="rs-select2 js-select-simple select--no-search">
-            <select
-              name="university"
-              value={formData.university}
-              onChange={handleInputChange}
-              required
-            >
-              <option value="" disabled>
-                Choose option
-              </option>
-              <option value="7667">University of Colombo</option>
-              <option value="7668">University of Kelaniya</option>
-              <option value="7669">University of Moratuwa</option>
-              <option value="7671">University of Peradeniya</option>
-              <option value="7670">University of Sri Jayewardenepura</option>
-              <option value="7672">University of Ruhuna</option>
-              <option value="7673">
-                Sri Lanka Institute of Information Technology
-              </option>
-              <option value="29287">
-                National School of Business Management
-              </option>
-            </select>
-            <div className="select-dropdown"></div>
-          </div>
-        </div>
+        {uni_key == undefined && (
+          <InputField
+            label={FORM_LABELS.UNIVERSITY_OR_INSTITUTE}
+            name="university"
+            value={formData.university}
+            onChange={handleInputChange}
+            required
+            isSelect={true}
+            options={UNIVERSITY_OPTIONS}
+            placeholder={FORM_PLACEHOLDERS.CHOOSE_OPTION}
+          />
+        )}
 
         <div className="row row-space">
           <div className="col-2">
             <InputField
-              label="Faculty"
+              label={FORM_LABELS.FACULTY}
               name="faculty"
               type="text"
               value={formData.faculty}
               onChange={handleInputChange}
               required
+              isSelect={true}
+              options={uni_key != undefined ? get_faculties(uni_key!) : []}
+              addSelectOther={true}
+              placeholder={FORM_PLACEHOLDERS.CHOOSE_OPTION}
+              disabled={uni_key == undefined}
             />
           </div>
           <div className="col-2">
             <InputField
-              label="Batch"
+              label={FORM_LABELS.BATCH}
               name="batch"
               type="text"
               value={formData.batch}
               onChange={handleInputChange}
               required
+              isSelect={true}
+              options={uni_key != undefined ? get_batches(uni_key!) : []}
+              addSelectOther={true}
+              placeholder={FORM_PLACEHOLDERS.CHOOSE_OPTION}
+              disabled={uni_key == undefined}
             />
           </div>
         </div>
 
         <div>
           <InputField
-            label="Why do you want to join AIESEC?"
+            label={FORM_LABELS.WHY_JOIN_AIESEC}
             name="why"
             type="text"
             value={formData.why}
@@ -266,108 +290,49 @@ export default function JoinAiesecForm() {
           />
         </div>
 
-        <div className="input-group">
-          <label className="label">
-            What is the most effective way to contact you?
-            <span className="required_field"> *</span>
-          </label>
-          <div className="rs-select2 js-select-simple select--no-search">
-            <select
-              name="preferred_contact"
-              value={formData.preferred_contact}
-              onChange={handleInputChange}
-              required
-            >
-              <option value="" disabled>
-                Choose option
-              </option>
-              <option value="21794">Email</option>
-              <option value="21792">WhatsApp</option>
-            </select>
-            <div className="select-dropdown"></div>
-          </div>
-        </div>
+        <InputField
+          label={FORM_LABELS.CONTACT_METHOD}
+          name="preferred_contact"
+          value={formData.preferred_contact}
+          onChange={handleInputChange}
+          required
+          isSelect={true}
+          options={CONTACT_METHOD_OPTIONS}
+          placeholder={FORM_PLACEHOLDERS.CHOOSE_OPTION}
+        />
 
-        <div className="input-group">
-          <label className="label">
-            Which of the following best fits your current employment status?
-            <span className="required_field"> *</span>
-          </label>
-          <div className="rs-select2 js-select-simple select--no-search">
-            <select
-              name="employment_status"
-              value={formData.employment_status}
-              onChange={handleInputChange}
-              required
-            >
-              <option value="" disabled>
-                Choose option
-              </option>
-              <option value="21790">Unemployed</option>
-              <option value="21789">Employed</option>
-              <option value="21791">Self-Employed</option>
-            </select>
-            <div className="select-dropdown"></div>
-          </div>
-        </div>
+        <InputField
+          label={FORM_LABELS.EMPLOYMENT_STATUS}
+          name="employment_status"
+          value={formData.employment_status}
+          onChange={handleInputChange}
+          required
+          isSelect={true}
+          options={EMPLOYMENT_STATUS_OPTIONS}
+          placeholder={FORM_PLACEHOLDERS.CHOOSE_OPTION}
+        />
 
-        <div className="input-group">
-          <label className="label">
-            What is your motivation when joining AIESEC?
-            <span className="required_field"> *</span>
-          </label>
-          <div className="rs-select2 js-select-simple select--no-search">
-            <select
-              name="motivation"
-              value={formData.motivation}
-              onChange={handleInputChange}
-              required
-            >
-              <option value="" disabled>
-                Choose option
-              </option>
-              <option value="21977">Connect with the impact of AIESEC</option>
-              <option value="21976">Global Networking</option>
-              <option value="21975">Leadership Experience</option>
-              <option value="21974">Personal Development</option>
-            </select>
-            <div className="select-dropdown"></div>
-          </div>
-        </div>
+        <InputField
+          label={FORM_LABELS.MOTIVATION}
+          name="motivation"
+          value={formData.motivation}
+          onChange={handleInputChange}
+          required
+          isSelect={true}
+          options={MOTIVATION_OPTIONS}
+          placeholder={FORM_PLACEHOLDERS.CHOOSE_OPTION}
+        />
 
-        <div className="input-group">
-          <label className="label">
-            From where did you hear about AIESEC?
-            <span className="required_field"> *</span>
-          </label>
-          <div className="rs-select2 js-select-simple select--no-search">
-            <select
-              name="referral"
-              value={formData.referral}
-              onChange={handleInputChange}
-              required
-            >
-              <option value="" disabled>
-                Choose option
-              </option>
-              <option value="21799">From a friend</option>
-              <option value="21809">Event</option>
-              <option value="21810">Email</option>
-              <option value="21802">Facebook</option>
-              <option value="21805">Instagram</option>
-              <option value="21806">LinkedIn</option>
-              <option value="21807">Other Social Media</option>
-              <option value="21813">
-                Media (magazine, TV, newspaper or radio)
-              </option>
-              <option value="21809">Uni Session or Presentation</option>
-              <option value="21808">Search Engine</option>
-              <option value="21800">Information Booth on Campus</option>
-              <option value="21814">Other</option>
-            </select>
-            <div className="select-dropdown"></div>
-          </div>
-        </div>
+        <InputField
+          label={FORM_LABELS.REFERRAL_SOURCE}
+          name="referral"
+          value={formData.referral}
+          onChange={handleInputChange}
+          required
+          isSelect={true}
+          options={REFERRAL_SOURCE_OPTIONS}
+          placeholder={FORM_PLACEHOLDERS.CHOOSE_OPTION}
+        />
 
         <div className="input-group">
           <div className="row row-space">
@@ -390,16 +355,15 @@ export default function JoinAiesecForm() {
                   marginBottom: "0",
                 }}
               >
-                I have read and agree to AIESEC Sri Lanka&apos;s{" "}
+                {PRIVACY_POLICY_TEXT.CHECKBOX_TEXT}{" "}
                 <a
-                  href="https://old.aiesec.lk/privacy-policy"
+                  href={PRIVACY_POLICY_TEXT.PRIVACY_POLICY_URL}
                   target="_blank"
                   style={{ color: "#037ef3" }}
                 >
-                  Privacy Policy
+                  {PRIVACY_POLICY_TEXT.PRIVACY_POLICY_LINK}
                 </a>{" "}
-                and I may be contacted by AIESEC representatives for further
-                processing.
+                {PRIVACY_POLICY_TEXT.ADDITIONAL_TEXT}
               </label>
             </div>
           </div>
@@ -415,7 +379,7 @@ export default function JoinAiesecForm() {
             style={{ background: "#037ef3", marginTop: "20px" }}
             type="submit"
           >
-            SEND APPLICATION
+            {SUBMIT_TEXT}
           </button>
         </div>
       </form>
