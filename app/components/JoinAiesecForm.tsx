@@ -33,10 +33,13 @@ declare global {
         }) => void;
       };
       (selector: string): {
-        select2: (options?: {
-          minimumResultsForSearch?: number;
-          width?: string;
-        }) => void;
+        select2: (
+          options?:
+            | { minimumResultsForSearch?: number; width?: string }
+            | "destroy"
+        ) => void;
+        on: (event: string, handler: (e: Event) => void) => void;
+        off: (event: string) => void;
       };
     };
     grecaptcha?: {
@@ -45,7 +48,6 @@ declare global {
     };
   }
 }
-
 export default function JoinAiesecForm({
   uni_key,
 }: {
@@ -70,6 +72,46 @@ export default function JoinAiesecForm({
 
   const [isLoading, setIsLoading] = useState(false);
 
+  // Compute whether faculty/batch should be enabled
+  const isUniversitySelected =
+    formData.university && formData.university !== "";
+
+  // Clear faculty and batch when university changes
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      faculty: "",
+      batch: "",
+    }));
+  }, [formData.university]);
+
+  // Reinitialize Select2 when university or options change
+  useEffect(() => {
+    const initializeSelect2 = () => {
+      if (typeof window !== "undefined" && window.jQuery) {
+        setTimeout(() => {
+          // Destroy existing Select2 instances
+          window.jQuery(".rs-select2 select").select2("destroy");
+          // Reinitialize Select2
+          window.jQuery(".rs-select2 select").select2({
+            minimumResultsForSearch: Infinity,
+            width: "100%",
+          });
+          // Re-add event handlers
+          window
+            .jQuery(".rs-select2 select")
+            .on("select2:select", function (e) {
+              const target = e.target as HTMLSelectElement;
+              const event = new Event("change", { bubbles: true });
+              target.dispatchEvent(event);
+            });
+        }, 100);
+      }
+    };
+
+    initializeSelect2();
+  }, [formData.university, isUniversitySelected]);
+
   // Initialize Select2 when component mounts
   useEffect(() => {
     const initSelect2 = () => {
@@ -78,6 +120,13 @@ export default function JoinAiesecForm({
         window.jQuery(".rs-select2 select").select2({
           minimumResultsForSearch: Infinity, // Disable search
           width: "100%",
+        });
+
+        // Add change event listener to sync Select2 with React state
+        window.jQuery(".rs-select2 select").on("select2:select", function (e) {
+          const target = e.target as HTMLSelectElement;
+          const event = new Event("change", { bubbles: true });
+          target.dispatchEvent(event);
         });
       }
     };
@@ -94,7 +143,13 @@ export default function JoinAiesecForm({
       }
     }, 100);
 
-    return () => clearInterval(checkLibraries);
+    return () => {
+      clearInterval(checkLibraries);
+      // Clean up Select2 event listeners
+      if (typeof window !== "undefined" && window.jQuery) {
+        window.jQuery(".rs-select2 select").off("select2:select");
+      }
+    };
   }, []);
 
   const handleInputChange = (
@@ -107,6 +162,27 @@ export default function JoinAiesecForm({
       setFormData((prev) => ({ ...prev, [name]: checked }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
+
+      // Reinitialize Select2 if university changed (to update faculty/batch options)
+      if (name === "university") {
+        setTimeout(() => {
+          if (typeof window !== "undefined" && window.jQuery) {
+            window.jQuery(".rs-select2 select").select2("destroy");
+            window.jQuery(".rs-select2 select").select2({
+              minimumResultsForSearch: Infinity,
+              width: "100%",
+            });
+            // Re-add event handlers after reinitializing
+            window
+              .jQuery(".rs-select2 select")
+              .on("select2:select", function (e) {
+                const target = e.target as HTMLSelectElement;
+                const event = new Event("change", { bubbles: true });
+                target.dispatchEvent(event);
+              });
+          }
+        }, 100);
+      }
     }
   };
 
@@ -204,10 +280,6 @@ export default function JoinAiesecForm({
       import("next/navigation").then(({ notFound }) => notFound());
     }
     return "Page Not found (404): Invalid URL";
-  }
-
-  if (uni_key == undefined && formData.university != "") {
-    uni_key = get_uni_key_from_id(formData.university);
   }
 
   return (
@@ -359,10 +431,14 @@ export default function JoinAiesecForm({
                   onChange={handleInputChange}
                   required
                   isSelect={true}
-                  options={uni_key != undefined ? get_faculties(uni_key!) : []}
+                  options={
+                    isUniversitySelected
+                      ? get_faculties(get_uni_key_from_id(formData.university))
+                      : []
+                  }
                   addSelectOther={true}
                   placeholder={FORM_PLACEHOLDERS.CHOOSE_OPTION}
-                  disabled={uni_key == undefined}
+                  disabled={!isUniversitySelected}
                 />
               </div>
               <div className="col-2">
@@ -374,10 +450,14 @@ export default function JoinAiesecForm({
                   onChange={handleInputChange}
                   required
                   isSelect={true}
-                  options={uni_key != undefined ? get_batches(uni_key!) : []}
+                  options={
+                    isUniversitySelected
+                      ? get_batches(get_uni_key_from_id(formData.university))
+                      : []
+                  }
                   addSelectOther={true}
                   placeholder={FORM_PLACEHOLDERS.CHOOSE_OPTION}
-                  disabled={uni_key == undefined}
+                  disabled={!isUniversitySelected}
                 />
               </div>
             </div>
