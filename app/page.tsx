@@ -1,5 +1,5 @@
 import JoinAiesecForm from "./components/JoinAiesecForm";
 
 export default function Home() {
-  return <JoinAiesecForm />;
+  return <JoinAiesecForm uni_key={undefined} />;
 }
