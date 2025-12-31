@@ -2,6 +2,7 @@
 
 import { useState, FormEvent, useEffect } from "react";
 import InputField from "./InputField";
+import Toast from "./Toast";
 import { FormData } from "../types/types";
 import {
   FORM_LABELS,
@@ -48,11 +49,14 @@ declare global {
     };
   }
 }
+
+export interface JoinAiesecFormProps {
+  uni_key: string | undefined;
+}
+
 export default function JoinAiesecForm({
   uni_key,
-}: {
-  uni_key: string | undefined;
-}) {
+}: JoinAiesecFormProps) {
   const [formData, setFormData] = useState<FormData>({
     first_name: "",
     last_name: "",
@@ -72,9 +76,37 @@ export default function JoinAiesecForm({
 
   const [isLoading, setIsLoading] = useState(false);
 
+  // Toast state
+  const [toast, setToast] = useState<{
+    isVisible: boolean;
+    message: string;
+    type: "success" | "error";
+  }>({
+    isVisible: false,
+    message: "",
+    type: "success",
+  });
+
   // Compute whether faculty/batch should be enabled
   const isUniversitySelected =
     formData.university && formData.university !== "";
+
+  // Helper function to show toast
+  const showToast = (message: string, type: "success" | "error") => {
+    setToast({
+      isVisible: true,
+      message,
+      type,
+    });
+  };
+
+  // Helper function to hide toast
+  const hideToast = () => {
+    setToast((prev) => ({
+      ...prev,
+      isVisible: false,
+    }));
+  };
 
   // Clear faculty and batch when university changes
   useEffect(() => {
@@ -194,7 +226,7 @@ export default function JoinAiesecForm({
       // Get reCAPTCHA token
       const recaptchaResponse = window.grecaptcha?.getResponse();
       if (!recaptchaResponse) {
-        alert("Please complete the reCAPTCHA verification.");
+        showToast("Please complete the reCAPTCHA verification.", "error");
         setIsLoading(false);
         return;
       }
@@ -205,8 +237,6 @@ export default function JoinAiesecForm({
         university: formData.university,
         "g-recaptcha-response": recaptchaResponse,
       };
-
-      console.log("Submitting form data:", submissionData);
 
       // Submit to API route
       const response = await fetch("/api/signup", {
@@ -220,7 +250,7 @@ export default function JoinAiesecForm({
       const result = await response.json();
 
       if (response.ok && result.data?.success) {
-        alert("Form submitted successfully! Welcome to AIESEC!");
+        showToast("Form submitted successfully! Welcome to AIESEC!", "success");
 
         // Reset form
         setFormData({
@@ -257,18 +287,25 @@ export default function JoinAiesecForm({
               return error.message || "Unknown error";
             }
           );
-          alert(`Validation Error(s):\n${errorMessages.join("\n")}`);
+          showToast(
+            `Validation Error(s):\n${errorMessages.join("\n")}`,
+            "error"
+          );
         } else {
-          alert(
+          showToast(
             `Error: ${
               result.message || "Failed to submit form. Please try again."
-            }`
+            }`,
+            "error"
           );
         }
       }
     } catch (error) {
       console.error("Form submission error:", error);
-      alert("An error occurred while submitting the form. Please try again.");
+      showToast(
+        "An error occurred while submitting the form. Please try again.",
+        "error"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -284,6 +321,12 @@ export default function JoinAiesecForm({
 
   return (
     <div className="wrapper wrapper--w680">
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
+      />
       <div className="card card-4">
         <div
           className="card-body"
@@ -311,18 +354,30 @@ export default function JoinAiesecForm({
                 backgroundColor: "rgba(255,255,255,0.95)",
                 position: "fixed",
                 top: 0,
-                bottom: 0,
+                left: 0,
                 width: "100%",
                 height: "100%",
                 zIndex: 999,
-                textAlign: "center",
-                verticalAlign: "middle",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
-              <div className="center">
+              <div
+                style={{
+                  textAlign: "center",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
                 <div
                   className="loadingio-spinner-dual-ring-lwapedn49g"
-                  style={{ width: "200px" }}
+                  style={{
+                    width: "200px",
+                    marginBottom: "20px",
+                  }}
                 >
                   <div className="ldio-18ldoi6nwr4">
                     <div></div>
