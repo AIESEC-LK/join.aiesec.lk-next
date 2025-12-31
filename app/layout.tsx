@@ -112,31 +112,7 @@ export default function RootLayout({
           <br />
           <br />
 
-          <div className="wrapper wrapper--w680">
-            <div className="card card-4">
-              <div
-                className="card-body"
-                style={{
-                  paddingTop: "40px",
-                }}
-              >
-                <center>
-                  <h1
-                    className="title"
-                    style={{
-                      color: "#037ef3",
-                      fontSize: "30px",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    {TITLE}
-                  </h1>
-                </center>
-
-                {children}
-              </div>
-            </div>
-          </div>
+          {children}
 
           <br />
           <br />
