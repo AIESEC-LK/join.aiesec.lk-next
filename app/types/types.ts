@@ -14,3 +14,5 @@ export interface FormData {
   referral: string;
   privacy_agreed: boolean;
 }
+
+export type FacultyOption = { value: string; label: string };

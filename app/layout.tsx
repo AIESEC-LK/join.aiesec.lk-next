@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import Script from "next/script";
 import Image from "next/image";
+import { TITLE, DESCRIPTION } from "./constants/site_constants";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -13,8 +14,8 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Join AIESEC",
-  description: "Become an AIESEC Member Today!",
+  title: TITLE,
+  description: DESCRIPTION,
 };
 
 export default function RootLayout({
@@ -128,7 +129,7 @@ export default function RootLayout({
                       fontWeight: "bold",
                     }}
                   >
-                    JOIN AIESEC
+                    {TITLE}
                   </h1>
                 </center>
 
