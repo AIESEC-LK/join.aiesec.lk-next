@@ -118,7 +118,7 @@ export async function POST(req: NextRequest) {
       req.headers.get("x-forwarded-for") ||
       req.headers.get("x-real-ip") ||
       "127.0.0.1";
-    const isValidCaptcha = true; //await verifyRecaptcha(captchaToken, clientIp);
+    const isValidCaptcha = await verifyRecaptcha(captchaToken, clientIp);
 
     if (!isValidCaptcha) {
       return NextResponse.json(
@@ -170,15 +170,15 @@ export async function POST(req: NextRequest) {
 
     // Create member lead via AIESEC API
     try {
-      // const apiResult = await createMemberLead(memberLead);
+      const apiResult = await createMemberLead(memberLead);
 
-      // if (apiResult.errors) {
-      //   return NextResponse.json({ errors: apiResult.errors }, { status: 400 });
-      // }
+      if (apiResult.errors) {
+        return NextResponse.json({ errors: apiResult.errors }, { status: 400 });
+      }
 
       // Append to Google Sheets
       try {
-        // await appendToSheets(sheetsData);
+        await appendToSheets(sheetsData);
       } catch (error) {
         console.error("Sheets append error:", error);
         return NextResponse.json(
@@ -197,7 +197,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         data: {
           success: true,
-          id: 1, //apiResult.data?.memberLeadCreate?.id,
+          id: apiResult.data?.memberLeadCreate?.id,
         },
       });
     } catch (error) {
